@@ -76,11 +76,21 @@ for x in np.round(np.arange(-4.0, 4.1, 0.1), 2):
 
             # z: time    #mu_z是每條規則中Z集合與alpha進行截斷後的值
             if rule["time_label"] == "short":
-                mu_z = np.minimum([mu_time_short(z) for z in z_values], alpha)
+                if alpha == 0:
+                        mu_z = np.zeros_like(z_values)  # 如果 alpha 為 0，則將 mu_z 設為全 0
+                else:
+                        mu_z = np.minimum([mu_time_short(z) for z in z_values], alpha)
             elif rule["time_label"] == "medium":
-                mu_z = np.minimum([mu_time_medium(z) for z in z_values], alpha)
+                if alpha == 0:
+                        mu_z = np.zeros_like(z_values)  # 如果 alpha 為 0，則將 mu_z 設為全 0
+                else:
+                        mu_z = np.minimum([mu_time_medium(z) for z in z_values], alpha)
             elif rule["time_label"] == "long":
-                mu_z = np.minimum([mu_time_long(z) for z in z_values], alpha)
+                if alpha == 0:
+                        mu_z = np.zeros_like(z_values)  # 如果 alpha 為 0，則將 mu_z 設為全 0
+                else:
+                        mu_z = np.minimum([mu_time_long(z) for z in z_values], alpha)
+
             mu_z_agg = np.maximum(mu_z_agg, mu_z)  #COG,MOM,MODMOM的每項規則聯集輸出
             mu_z = np.array(mu_z)
             max_z = np.max(mu_z)
@@ -94,11 +104,21 @@ for x in np.round(np.arange(-4.0, 4.1, 0.1), 2):
             
             # w: power    #mu_w是每條規則中Z集合與alpha進行截斷後的值
             if rule["power_label"] == "low":
-                mu_w = np.minimum([mu_power_low(w) for w in w_values], alpha)
+                if alpha == 0:
+                    mu_w = np.zeros_like(w_values)  # 如果 alpha 為 0，則將 mu_w 設為全 0
+                else:
+                    mu_w = np.minimum([mu_power_low(w) for w in w_values], alpha)
             elif rule["power_label"] == "medium":
-                mu_w = np.minimum([mu_power_medium(w) for w in w_values], alpha)
+                if alpha == 0:
+                    mu_w = np.zeros_like(w_values)  # 如果 alpha 為 0，則將 mu_w 設為全 0
+                else:
+                    mu_w = np.minimum([mu_power_medium(w) for w in w_values], alpha)
             elif rule["power_label"] == "high":
-                mu_w = np.minimum([mu_power_high(w) for w in w_values], alpha)
+                if alpha == 0:
+                    mu_w = np.zeros_like(w_values)  # 如果 alpha 為 0，則將 mu_w 設為全 0
+                else:
+                    mu_w = np.minimum([mu_power_high(w) for w in w_values], alpha)
+
             mu_w_agg = np.maximum(mu_w_agg, mu_w)
             mu_w = np.array(mu_w)
             max_w = np.max(mu_w)
