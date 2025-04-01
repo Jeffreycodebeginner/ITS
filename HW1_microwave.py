@@ -92,6 +92,8 @@ for x in np.round(np.arange(-4.0, 4.1, 0.1), 2):
                         mu_z = np.minimum([mu_time_long(z) for z in z_values], alpha)
 
             mu_z_agg = np.maximum(mu_z_agg, mu_z)  #COG,MOM,MODMOM的每項規則聯集輸出
+            
+            #====Ca會在每條規則裡面計算
             mu_z = np.array(mu_z)
             max_z = np.max(mu_z)
             z_support = z_values[mu_z == max_z]
@@ -119,28 +121,35 @@ for x in np.round(np.arange(-4.0, 4.1, 0.1), 2):
                 else:
                     mu_w = np.minimum([mu_power_high(w) for w in w_values], alpha)
 
-            mu_w_agg = np.maximum(mu_w_agg, mu_w)
+            mu_w_agg = np.maximum(mu_w_agg, mu_w)   #COG,MOM,MODMOM的每項規則聯集輸出
+            
             mu_w = np.array(mu_w)
             max_w = np.max(mu_w)
             w_support = w_values[mu_w == max_w]
             w_c = (np.min(w_support) + np.max(w_support)) / 2 if len(w_support) > 0 else 0
-            ca_w_numer += w_c * max_w
+            #CA計算跑每條規則後進行累加
+            ca_w_numer += w_c * max_w   #max_w :裁剪後的最大值   * w_c:支撐點的中心點
             ca_w_denom += max_w
         
         #解模糊化
+        #1.COG
         z_cog = np.sum(mu_z_agg * z_values) / np.sum(mu_z_agg) if np.sum(mu_z_agg) > 0 else 0
         w_cog = np.sum(mu_w_agg * w_values) / np.sum(mu_w_agg) if np.sum(mu_w_agg) > 0 else 0
 
         mu_max_z = np.max(mu_z_agg)
-        z_mom = np.mean(z_values[mu_z_agg == mu_max_z]) if mu_max_z > 0 else 0
         mu_max_w = np.max(mu_w_agg)
+        
+        #2.MOM
+        z_mom = np.mean(z_values[mu_z_agg == mu_max_z]) if mu_max_z > 0 else 0
         w_mom = np.mean(w_values[mu_w_agg == mu_max_w]) if mu_max_w > 0 else 0
-
+       
+        #3.mmod
         z_support = z_values[mu_z_agg == mu_max_z]
         z_mmod = (np.min(z_support) + np.max(z_support)) / 2 if len(z_support) > 0 else 0
         w_support = w_values[mu_w_agg == mu_max_w]
         w_mmod = (np.min(w_support) + np.max(w_support)) / 2 if len(w_support) > 0 else 0
-
+       
+        #4.CA
         z_ca = ca_z_numer / ca_z_denom if ca_z_denom > 0 else 0
         w_ca = ca_w_numer / ca_w_denom if ca_w_denom > 0 else 0
 
@@ -177,3 +186,7 @@ plot_surface(df["x"], df["y"], df["w_COG"], "COG - Power (w*)", "Power w*", cmap
 plot_surface(df["x"], df["y"], df["w_MoM"], "MoM - Power (w*)", "Power w*", cmap='plasma')
 plot_surface(df["x"], df["y"], df["w_ModMoM"], "Modified MoM - Power (w*)", "Power w*", cmap='plasma')
 plot_surface(df["x"], df["y"], df["w_CA"], "Center Average - Power (w*)", "Power w*", cmap='plasma')
+
+print(df[(df["x"] == -2.0) & (df["y"] == 0.1)])
+df.to_csv("YuanLEE.csv", index=False)
+    
