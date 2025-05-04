@@ -198,7 +198,7 @@ def run_ga(choice, max_gen=MAX_GEN):
             idx     = np.argmax(fitness)
             best_P  = P_x[idx].copy()
             best_x  = best_P
-            print(f"Choice {choice} Gen {gen}: avg ≥ 145 且 max ≥ {second_best:.4f}, 停止")
+            print(f"Choice {choice} Gen {gen}: avg ≥ 150 且 max ≥ {second_best:.4f}, 停止")
             break
         
         
@@ -272,7 +272,7 @@ for choice in (1, 2, 3):
 
     plt.figure(figsize=(6,4))
     plt.plot(x_all, y_all, label='f(x)')
-    plt.axvline(best_x, color='k', linestyle='--', label=f'solution x , x= {best_P:.4f}  '  )
+    plt.axvline(best_x, color='k', linestyle='--', label=f'solution x , x= {best_P:.4f} ' )
     plt.scatter(ans_x, ans_y, color='red', label=f'Max at x={ans_x:.3f}, f(x)={ans_y:.3f}')
     plt.title(f'Plot of f(x) with {label_1[choice]}')
     plt.xlabel('x')
