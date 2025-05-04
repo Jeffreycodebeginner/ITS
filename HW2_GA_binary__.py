@@ -11,10 +11,10 @@ POP_SIZE   = 10    # 族群大小
 CHROM_LEN  = 10    # 染色體長度（bit 數）
 MR         = 0.01  # 突變率（固定每代一位 bit 可能翻轉）
 CR         = 0.8   # 交配率
-MAX_GEN    = 1000   # 最大世代數
-labels = {1: "f(x)", 2: "[f(x)]^2", 3: "2f(x)+1"}
+MAX_GEN    = 10000   # 最大世代數
 k =2# 第二類適應度 指數大小
-a, b   = 2, 1    # 第三類適應度 a*f + b
+a, b   = 2, 0   # 第三類適應度 a*f + b
+labels = {1: "f(x)", 2: f"[f(x)]^{k}", 3: f"{a}f(x)+{b}"}
 
 # --- 2. 初始化族群 ---
 def init_population(pop_size, chrom_len):
@@ -41,11 +41,11 @@ def calculate_fitness(choice, x):
 # --- 5. 目標水準函數 ---
 def compute_best_and_second_y(choice):
     if choice == 1:
-        return ans_y,second_best
+        return ans_y, second_best
     elif choice == 2:
-        return ans_y**k,second_best**k
+        return ans_y**k, second_best**k
     else:
-        return a * ans_y + b,a*second_best+b
+        return a * ans_y + b, a * second_best + b
 
 # --- 6. 選擇策略封裝 ---
 def selection_wrapper(method, fit, cr):
@@ -111,12 +111,15 @@ y_all = -15 * (np.sin(2*x_all))**2 - (x_all-2)**2 + 160
 best_idx = np.argmax(y_all)
 ans_x   = x_all[best_idx]
 ans_y   = y_all[best_idx]
-second_best =159.8041
+y2 = y_all.copy()
+y2[best_idx] = -np.inf
+second_best = np.max(y2)
+print(f"DEBUG: second_best = {second_best:.6f}")  
 print(f"全域最佳解 x = {ans_x:.4f}, y = {ans_y:.4f}")
 
 # --- 11. 停止條件門檻函式 ---
 def conditon_value(choice):
-    threshold = 145
+    threshold = 145 
     tol=0.01
     if choice == 1:
         return threshold,tol
@@ -124,6 +127,8 @@ def conditon_value(choice):
         return threshold**k,tol**k
     else:
         return a * threshold + b,a*tol
+
+print(">>> IN compute_best_and_second_y:", compute_best_and_second_y(3))
 
 # --- 12. 執行 GA 主流程 ---
 def run_ga(choice, selection_method, max_gen=MAX_GEN):
@@ -138,21 +143,22 @@ def run_ga(choice, selection_method, max_gen=MAX_GEN):
         avg_hist.append(fit_value.mean())
         
 
-
-
         # 停止條件：累積 avg_fit > threshold 五次且當前 max_fit ≥ target
         threshold,tol = conditon_value(choice)
-        target,snd   = compute_best_and_second_y(choice)
+        target, snd = compute_best_and_second_y(choice)
+        print(f"DEBUG: choice={choice}, target={target:.6f}, snd={snd:.6f}")
         if fit_value.mean() >= threshold:
             count += 1
-        # 當累積 avg_fit 次數≥5 且當前 max_fit ≥ target 時停止
+        # 當累積 avg_fit 次數≥5 且當前 max_fit ≥ snd 時停止
         if count >= 5 and fit_value.max() >= snd:
             idx     = np.argmax(fit_value)
             best_P  = P[idx].copy()
             best_x  = decimal_to_x(np.array([binary_to_decimal(best_P)]))[0]
-            print(f"Choice {choice} Gen {gen}: avg ≥ {threshold} x5 且 max ≥ {snd}, 停止")
+            print(f"Choice {choice} Gen {gen}: avg ≥ {threshold} x5 且 max ≥ 158.8041, 停止")
             break
-
+        
+        
+        
         pairs, losers = selection_wrapper(selection_method, fit_value, CR)
         children      = single_point_crossover(P, pairs)
         children      = mutate_one_bit(children)
@@ -176,21 +182,19 @@ if __name__ == '__main__':
         max_h, avg_h ,best_P,best_x= run_ga(choice, selection_method)
         target,second_best = compute_best_and_second_y(choice)
         print(f"[Choice {choice}] 最佳染色體: {best_P}, x = {best_x:.4f}\n")
-# =============================================================================
-#         plt.figure(figsize=(6,4))
-#         plt.plot(max_h, label='Max Fitness')
-#         plt.plot(avg_h, label='Average Fitness')
-#         plt.axhline(target, color='k', linestyle='--', label='Target')
-#         plt.axhline(target, color='r', linestyle='-.', label='second best')
-#         plt.title(f"GA Converge Curve Data not deel— {labels[choice]}")
-#         plt.xlabel('Generation')
-#         plt.ylabel('Fitness')
-#         plt.legend()
-#         plt.grid(True)
-#         plt.tight_layout()
-#         plt.show()
-# 
-# =============================================================================
+        
+        plt.figure(figsize=(6,4))
+        plt.plot(max_h, label='Max Fitness')
+        plt.plot(avg_h, label='Average Fitness')
+        plt.axhline(target, color='k', linestyle='--', label='Target')
+        plt.title(f"GA Converge Curve Data not deel— {labels[choice]}")
+        plt.xlabel('Generation')
+        plt.ylabel('Fitness')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
         
         
         # 還原適應度
@@ -206,6 +210,7 @@ if __name__ == '__main__':
         plt.plot(max_h, label='Max Fitness')
         plt.plot(avg_h, label='Average Fitness')
         plt.axhline(target, color='k', linestyle='--', label='Target')
+
         plt.title(f"GA Converge Curve — {labels[choice]}")
         plt.xlabel('Generation')
         plt.ylabel('Fitness')
