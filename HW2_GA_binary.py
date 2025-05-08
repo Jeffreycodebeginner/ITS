@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
+
 # ==========================
 # GA 二元編碼程式
 # ==========================
@@ -12,9 +13,10 @@ CHROM_LEN  = 10    # 染色體長度（bit 數）
 MR         = 0.01  # 突變率（固定每代一位 bit 可能翻轉）
 CR         = 0.8   # 交配率
 MAX_GEN    = 10000   # 最大世代數
-labels = {1: "f(x)", 2: "[f(x)]^{k}", 3: "{a}f(x)+{b}"}
-k =10# 第二類適應度 指數大小
-a, b   = 2, 1    # 第三類適應度 a*f + b
+k =100              # 第二類適應度 指數大小
+a, b   = 2, 1000   # 第三類適應度 a*f + b
+labels = {1: "f(x)", 2: f"[f(x)]^{k}", 3: f"{a}f(x)+{b}"}
+
 
 # --- 2. 初始化族群 ---
 def init_population(pop_size, chrom_len):
@@ -41,23 +43,15 @@ def calculate_fitness(choice, x):
 # --- 5. 目標水準函數 ---
 def compute_best_and_second_y(choice):
     if choice == 1:
-        return ans_y,second_best
+        return ans_y, second_best
     elif choice == 2:
-        return ans_y**k,second_best**k
+        return ans_y**k, second_best**k
     else:
-        return a * ans_y + b,a*second_best+b
+        return (a * ans_y + b), (a * second_best + b)
 
-# --- 6. 選擇策略封裝 ---
-def selection_wrapper(method, fit, cr):
-    if method == 'A':
-        return roulette_wheel_selection(fit, cr)
-    elif method == 'B':
-        return tournament_selection(fit, cr)
-    else:
-        print("未識別選擇策略，將使用輪盤賭")
-        return roulette_wheel_selection(fit, cr)
 
-# --- 6.1. 輪盤賭選擇 ---
+
+# --- 6. 輪盤賭選擇 ---
 def roulette_wheel_selection(fit, cr):
     num_mate = int(len(fit) * cr)
     cum_fit   = np.cumsum(fit)
@@ -68,18 +62,7 @@ def roulette_wheel_selection(fit, cr):
     losers    = selected[num_mate:]
     return pairs, losers
 
-# --- 6.2. 競賽式選擇 ---
-def tournament_selection(fit, cr, k=3):
-    num_mate = int(len(fit) * cr)
-    indices = []
-    for _ in range(num_mate):
-        competitors = np.random.choice(len(fit), k, replace=False)
-        winner = competitors[np.argmax(fit[competitors])]
-        indices.append(winner)
-    pairs = np.array(indices).reshape(-1, 2)
-    sorted_idx = np.argsort(fit)
-    losers = sorted_idx[-(len(fit)-len(indices)):]
-    return pairs, losers
+
 
 # --- 7. 交配（單點） ---
 def single_point_crossover(P, pairs):
@@ -110,23 +93,26 @@ x_all = decimal_to_x(P_dec)
 y_all = -15 * (np.sin(2*x_all))**2 - (x_all-2)**2 + 160
 best_idx = np.argmax(y_all)
 ans_x   = x_all[best_idx]
-ans_y   = y_all[best_idx]
-second_best =159.8041
-print(f"全域最佳解 x = {ans_x:.4f}, y = {ans_y:.4f}")
+ans_y   = y_all[best_idx]+0.01
+y2 = y_all.copy()
+y2[best_idx] = -np.inf
+second_best = np.max(y2)
+print(f"最2大值: second_best = {second_best:.6f}")  
+print(f"全域最佳解 x = {ans_x:.5f}, y = {ans_y:.4f}")
+
 
 # --- 11. 停止條件門檻函式 ---
 def conditon_value(choice):
-    threshold = 145
-    tol=0.01
+    threshold = 145 
     if choice == 1:
-        return threshold,tol
+        return threshold
     elif choice == 2:
-        return threshold**k,tol**k
+        return threshold**k
     else:
-        return a * threshold + b,a*tol
+        return a * threshold + b
 
 # --- 12. 執行 GA 主流程 ---
-def run_ga(choice, selection_method, max_gen=MAX_GEN):
+def run_ga(choice, max_gen=MAX_GEN):
     P = init_population(POP_SIZE, CHROM_LEN)
     max_hist, avg_hist = [], []
     count, best_P, best_x = 0, None, None
@@ -138,22 +124,22 @@ def run_ga(choice, selection_method, max_gen=MAX_GEN):
         avg_hist.append(fit_value.mean())
         
 
-
-
         # 停止條件：累積 avg_fit > threshold 五次且當前 max_fit ≥ target
-        threshold,tol = conditon_value(choice)
-        target,snd   = compute_best_and_second_y(choice)
+        threshold = conditon_value(choice)
+        target, snd = compute_best_and_second_y(choice)
         if fit_value.mean() >= threshold:
             count += 1
-        # 當累積 avg_fit 次數≥5 且當前 max_fit ≥ target 時停止
-        if count >= 2 and fit_value.max() >= snd:
+        # 當累積 avg_fit 次數≥5 且當前 max_fit ≥ snd 時停止
+        if count >= 5 and fit_value.max() >= snd:
             idx     = np.argmax(fit_value)
             best_P  = P[idx].copy()
             best_x  = decimal_to_x(np.array([binary_to_decimal(best_P)]))[0]
-            print(f"Choice {choice} Gen {gen}: avg ≥ {threshold} x5 且 max ≥ {snd}, 停止")
+            print(f"Choice {choice} Gen {gen}: avg ≥ 145 且 max ≥ 158.8041, 停止")
             break
-
-        pairs, losers = selection_wrapper(selection_method, fit_value, CR)
+        
+        
+        
+        pairs, losers = roulette_wheel_selection(fit_value,CR)
         children      = single_point_crossover(P, pairs)
         children      = mutate_one_bit(children)
         P             = form_new_population(P, children, losers)
@@ -162,21 +148,30 @@ def run_ga(choice, selection_method, max_gen=MAX_GEN):
         idx    = np.argmax(fit_value)
         best_P = P[idx].copy()
         best_x = decimal_to_x( np.array([ binary_to_decimal(best_P) ]) )[0]
-        
-        
-        
-    return max_hist, avg_hist,best_P,best_x
+    return max_hist, avg_hist,best_P,best_x,gen
 
 # --- 13. 範例執行與繪圖 ---
-if __name__ == '__main__':
-    base_seed = random.randint(1, 100000)
-    selection_method = input("請選擇選擇策略 (A: 輪盤賭, B: 競賽式): ").upper()
-    for choice in (1, 2, 3):
-        np.random.seed(base_seed)
-        max_h, avg_h ,best_P,best_x= run_ga(choice, selection_method)
-        target,second_best = compute_best_and_second_y(choice)
+seed = random.randint(1, 100000)
+seed =17366
+print("種子碼:",seed)
+for choice in (1, 2, 3):
+        np.random.seed(seed)
+        max_h, avg_h ,best_P,best_x,gen= run_ga(choice)
+        target,_ = compute_best_and_second_y(choice)
         print(f"[Choice {choice}] 最佳染色體: {best_P}, x = {best_x:.4f}\n")
         
+        plt.figure(figsize=(6,4))
+        plt.plot(max_h, label='Max Fitness')
+        plt.plot(avg_h, label='Average Fitness')
+        plt.axhline(target, color='k', linestyle='--', label='Target')
+        plt.title(f"GA(B) Converge Curve Data not deel— {labels[choice]} ; seed = {seed}")
+        plt.xlabel(f"Generation (converge Gen:{gen})")
+        plt.ylabel('Fitness')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
         
         # 還原適應度
         if choice == 2:
@@ -191,8 +186,9 @@ if __name__ == '__main__':
         plt.plot(max_h, label='Max Fitness')
         plt.plot(avg_h, label='Average Fitness')
         plt.axhline(target, color='k', linestyle='--', label='Target')
-        plt.title(f"GA Converge Curve — {labels[choice]}")
-        plt.xlabel('Generation')
+
+        plt.title(f"GA(B) Converge Curve — {labels[choice]} ; seed = {seed}")
+        plt.xlabel(f"Generation (converge Gen:{gen})")
         plt.ylabel('Fitness')
         plt.legend()
         plt.grid(True)
@@ -201,8 +197,9 @@ if __name__ == '__main__':
 
         plt.figure(figsize=(6,4))
         plt.plot(x_all, y_all, label='f(x)')
+        plt.axvline(best_x, color='k', linestyle='--', label=f'solution x , x= {best_x:.4f}  '  )
         plt.scatter(ans_x, ans_y, color='red', label=f'Max at x={ans_x:.3f}, f(x)={ans_y:.3f}')
-        plt.title('Plot of f(x)')
+        plt.title(f'Plot of f(x) with {labels[choice]}')
         plt.xlabel('x')
         plt.ylabel('f(x)')
         plt.legend()
