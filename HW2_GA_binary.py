@@ -13,8 +13,8 @@ CHROM_LEN  = 10    # 染色體長度（bit 數）
 MR         = 0.01  # 突變率（固定每代一位 bit 可能翻轉）
 CR         = 0.8   # 交配率
 MAX_GEN    = 10000   # 最大世代數
-k =100              # 第二類適應度 指數大小
-a, b   = 2, 1000   # 第三類適應度 a*f + b
+k =2            # 第二類適應度 指數大小
+a, b   = 10 ,1   # 第三類適應度 a*f + b
 labels = {1: "f(x)", 2: f"[f(x)]^{k}", 3: f"{a}f(x)+{b}"}
 
 
@@ -152,7 +152,7 @@ def run_ga(choice, max_gen=MAX_GEN):
 
 # --- 13. 範例執行與繪圖 ---
 seed = random.randint(1, 100000)
-seed =17366
+# seed =87927
 print("種子碼:",seed)
 for choice in (1, 2, 3):
         np.random.seed(seed)
