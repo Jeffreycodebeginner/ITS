@@ -160,7 +160,7 @@ def plot_surface(x, y, z, title, zlabel, cmap='viridis'):
     plt.tight_layout()
     plt.show()
 
-# 繪圖：不遮蔽但顯示所有值（包含 w < 600）
+# 繪圖：
 plot_surface(df["x"], df["y"], df["z_COG"], "COG - Time (z*)", "Time z*")
 plot_surface(df["x"], df["y"], df["z_MoM"], "MoM - Time (z*)", "Time z*")
 plot_surface(df["x"], df["y"], df["z_ModMoM"], "Modified MoM - Time (z*)", "Time z*")
@@ -170,6 +170,35 @@ plot_surface(df["x"], df["y"], df["w_MoM"], "MoM - Power (w*)", "Power w*", cmap
 plot_surface(df["x"], df["y"], df["w_ModMoM"], "Modified MoM - Power (w*)", "Power w*", cmap='plasma')
 plot_surface(df["x"], df["y"], df["w_CA"], "Center Average - Power (w*)", "Power w*", cmap='plasma')
 
-print(df[(df["x"] == -2.0) & (df["y"] == 0.1)])
-df.to_csv("YuanLEE.csv", index=False)
+
+from tabulate import tabulate
+
+def query_result(xQ, yQ):
+    result = df[(df["x"] == xQ) & (df["y"] == yQ)]
+    if result.empty:
+        print("查無此組合，請確認是否為 0.1 的倍數")
+    else:
+        print(tabulate(result, headers='keys', tablefmt='grid'))
+
+ans = input("請輸入 'Y' 或 'N' 來決定是否要查詢：")
+if ans.upper() == 'Y':
+    xQ = float(input("請輸入溫度 -4.0 ~ 4.0 度C："))
+    yQ = float(input("請輸入重量 0.0 ~ 2.0 kg："))
+    query_result(xQ, yQ)
+else:
+    print("程式結束或跳過查詢")
+
+
+df["z_diff"]=abs(df["z_MoM"]-df["z_ModMoM"])
+df["w_diff"]=abs(df["w_MoM"]-df["w_ModMoM"])
+
+diff_points = df[(df["z_diff"] > 1) | (df["w_diff"] > 1)]
+
+print("Z有差",diff_points[["x","y","z_diff","w_diff"]])
+
+
+
+df.to_csv("DATA_HW1.csv", index=False)
     
+
+
