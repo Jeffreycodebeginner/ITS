@@ -175,7 +175,7 @@ def run_EA(choice, max_gen=MAX_GEN):
 
 #繪圖
 seed = random.randint(1, 100000)
-seed= 87927
+# seed= 87927
 print("種子碼:",seed)
 for choice in (1, 2, 3):
     np.random.seed(seed)

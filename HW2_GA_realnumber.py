@@ -182,28 +182,26 @@ def run_ga(choice, max_gen=MAX_GEN):
 #=======主程式====
 #繪圖
 seed = random.randint(1, 100000)
-seed = 87927
+# seed = 87927
 print("種子碼:",seed)
 for choice in (1, 2, 3):
     np.random.seed(seed)
     max_h, avg_h ,best_P,best_x,gen= run_ga(choice)
     target,_ = compute_best_and_second_y(choice)
     print(f"[Choice {choice}] 最佳染色體(實數)  x= {best_P:.4f}")
-# =============================================================================
-#     
-#     plt.figure(figsize=(6,4))
-#     plt.plot(max_h, label='Max Fitness')
-#     plt.plot(avg_h, label='Average Fitness')
-#     plt.axhline(target, color='k', linestyle='--', label='Target')
-#     plt.title(f"GA(R) Converge Curve Data not deel— {label_1[choice]} ; seed ={seed}")
-#     plt.xlabel(f"Generation (converge Gen:{gen})")
-#     plt.ylabel('Fitness')
-#     plt.legend()
-#     plt.grid(True)
-#     plt.tight_layout()
-#     plt.show()
-#         
-# =============================================================================
+    
+    plt.figure(figsize=(6,4))
+    plt.plot(max_h, label='Max Fitness')
+    plt.plot(avg_h, label='Average Fitness')
+    plt.axhline(target, color='k', linestyle='--', label='Target')
+    plt.title(f"GA(R) Converge Curve Data not deel— {label_1[choice]} ; seed ={seed}")
+    plt.xlabel(f"Generation (converge Gen:{gen})")
+    plt.ylabel('Fitness')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+        
     
     # 還原適應度
     if choice == 2:
